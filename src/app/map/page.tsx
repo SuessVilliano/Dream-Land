@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MOCK_PROPERTIES, PropertyData, STATES } from "@/data/properties";
 import AIAssistant from "@/components/AIAssistant";
 import ScoreGauge from "@/components/ScoreGauge";
@@ -32,12 +32,31 @@ const Popup = dynamic(
   () => import("react-leaflet").then((mod) => mod.Popup),
   { ssr: false }
 );
+const LeafletIconFix = dynamic(
+  () => import("@/components/LeafletIconFix"),
+  { ssr: false }
+);
 
 function MapInner() {
   const [stateFilter, setStateFilter] = useState("all");
   const [selectedProperty, setSelectedProperty] =
     useState<PropertyData | null>(null);
   const { toggleSave, isSaved } = useSavedProperties();
+  const [coloredIcons, setColoredIcons] = useState<Record<string, L.Icon> | null>(null);
+
+  // Load colored icons client-side only
+  useEffect(() => {
+    import("@/components/LeafletIconFix").then(({ createColoredIcon }) => {
+      setColoredIcons({
+        sheriff_sale: createColoredIcon("red"),
+        tax_deed: createColoredIcon("gold"),
+        tax_lien: createColoredIcon("orange"),
+        foreclosure: createColoredIcon("violet"),
+        listing: createColoredIcon("green"),
+        default: createColoredIcon("blue"),
+      });
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     if (stateFilter === "all") return MOCK_PROPERTIES;
@@ -61,12 +80,21 @@ function MapInner() {
 
       {/* Map toolbar */}
       <div className="bg-[rgba(15,23,42,0.9)] border-b border-blue-500/20 px-6 py-3 flex items-center justify-between z-10">
-        <h1 className="text-lg font-bold text-slate-100">
-          Property Map{" "}
-          <span className="text-sm font-normal text-slate-500">
-            {filtered.length} properties
-          </span>
-        </h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-bold text-slate-100">
+            Property Map{" "}
+            <span className="text-sm font-normal text-slate-500">
+              {filtered.length} properties
+            </span>
+          </h1>
+          {/* Legend */}
+          <div className="hidden md:flex items-center gap-3 text-[0.6rem] text-slate-500">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />Sheriff</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />Tax Deed</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400" />Foreclosure</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />Listing</span>
+          </div>
+        </div>
         <select
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value)}
@@ -90,6 +118,7 @@ function MapInner() {
             style={{ height: "100%", width: "100%" }}
             scrollWheelZoom
           >
+            <LeafletIconFix />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -98,37 +127,31 @@ function MapInner() {
               <Marker
                 key={p.id}
                 position={[p.lat, p.lng]}
+                icon={coloredIcons?.[p.auctionType] ?? coloredIcons?.default ?? undefined}
                 eventHandlers={{
                   click: () => setSelectedProperty(p),
                 }}
-              />
-            ))}
-            {selectedProperty && (
-              <Popup
-                position={[selectedProperty.lat, selectedProperty.lng]}
-                eventHandlers={{
-                  remove: () => setSelectedProperty(null),
-                }}
               >
-                <div className="text-slate-900 min-w-[200px]">
-                  <strong>{selectedProperty.address}</strong>
-                  <br />
-                  {selectedProperty.city}, {selectedProperty.state}
-                  <br />
-                  <span className="text-green-700 font-bold">
-                    $
-                    {(
-                      selectedProperty.openingBid ||
-                      selectedProperty.listPrice ||
-                      0
-                    ).toLocaleString()}
-                  </span>
-                  <span className="text-gray-500 text-xs ml-1">
-                    {selectedProperty.acres} ac
-                  </span>
-                </div>
-              </Popup>
-            )}
+                <Popup>
+                  <div className="text-slate-900 min-w-[200px]">
+                    <strong>{p.address}</strong>
+                    <br />
+                    {p.city}, {p.state}
+                    <br />
+                    <span className="text-green-700 font-bold">
+                      ${(p.openingBid || p.listPrice || 0).toLocaleString()}
+                    </span>
+                    <span className="text-gray-500 text-xs ml-1">
+                      {p.acres} ac
+                    </span>
+                    <br />
+                    <span className="text-xs text-gray-600">
+                      {p.auctionType.replace("_", " ")} &middot; AI Score: {p.aiScore}
+                    </span>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         </div>
 
