@@ -10,7 +10,7 @@ export interface DataSource {
   id: string;
   name: string;
   provider: "firecrawl" | "rapidapi" | "apify" | "direct";
-  type: "auction" | "listing" | "valuation" | "enrichment";
+  type: "auction" | "listing" | "valuation" | "enrichment" | "skip_trace";
   states: string[];
   description: string;
   envKey: string; // env var name for API key
@@ -154,6 +154,30 @@ export const DATA_SOURCES: DataSource[] = [
       "Scrapes county GIS portals for zoning, parcel boundaries, and ownership data.",
     envKey: "APIFY_API_TOKEN",
     rateLimit: 30,
+  },
+
+  // ── Skip Trace: Owner lookup & door-knocking ───────────────
+  {
+    id: "rapidapi-skip-trace",
+    name: "Skip Trace (Owner Lookup)",
+    provider: "rapidapi",
+    type: "skip_trace",
+    states: ["*"],
+    description:
+      "Property owner name, mailing address, tax history, sale history, equity estimates, and occupancy status via Realty Mole + reverse geocoding.",
+    envKey: "RAPIDAPI_KEY",
+    rateLimit: 30,
+  },
+  {
+    id: "nominatim-nearby",
+    name: "Nearby Parcel Discovery",
+    provider: "direct",
+    type: "skip_trace",
+    states: ["*"],
+    description:
+      "Free Nominatim-based reverse geocoding to discover nearby addresses from GPS coordinates. No API key needed.",
+    envKey: "",
+    rateLimit: 60,
   },
 
   // ── Direct APIs (free, no key or free key) ─────────────────

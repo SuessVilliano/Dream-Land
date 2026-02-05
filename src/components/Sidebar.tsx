@@ -12,6 +12,7 @@ import {
   Calculator,
   Database,
   Plug,
+  Crosshair,
   ChevronLeft,
   ChevronRight,
   Sun,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/map", label: "Map View", icon: MapPin },
   { href: "/explore", label: "Explore Markets", icon: Database },
   { href: "/saved", label: "Saved", icon: Bookmark, showBadge: true },
+  { href: "/canvas", label: "Canvas", icon: Crosshair },
   { href: "/sources", label: "Data Sources", icon: Plug },
   { href: "/calculator", label: "NACA Calculator", icon: Calculator },
 ];
