@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: linear-gradient(135deg, #0a0f1a 0%, #0d1524 50%, #0f1a2e 100%);
+  min-height: 100vh;
+  color: #e2e8f0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Score Gauge */
+.score-gauge {
+  position: relative;
+  width: 60px;
+  height: 35px;
+}
+
+.score-gauge.large {
+  width: 80px;
+  height: 45px;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.score-value {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.score-gauge.large .score-value {
+  font-size: 1.1rem;
+}
+
+/* Auction badge color variants */
+.auction-badge[data-type="sheriff_sale"] {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.auction-badge[data-type="tax_deed"] {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.auction-badge[data-type="foreclosure"] {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+}
+
+.auction-badge[data-type="listing"] {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+/* AI verdict color variants */
+.ai-verdict[data-verdict="excellent-opportunity"],
+.ai-verdict[data-verdict="strong-buy"],
+.ai-verdict[data-verdict="best-budget-pick"] {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.ai-verdict[data-verdict="great-starter"],
+.ai-verdict[data-verdict="solid-choice"],
+.ai-verdict[data-verdict="strong-value"],
+.ai-verdict[data-verdict="good-value"],
+.ai-verdict[data-verdict="good-suburban-value"] {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.ai-verdict[data-verdict="speculative"],
+.ai-verdict[data-verdict="proceed-with-caution"] {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+/* Meter fills */
+.meter-fill.good {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.meter-fill.warning {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.meter-fill.danger {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
