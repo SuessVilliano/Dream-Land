@@ -12,6 +12,7 @@ import {
   Calculator,
   Database,
   Plug,
+  Crosshair,
   ChevronLeft,
   ChevronRight,
   Sun,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/map", label: "Map View", icon: MapPin },
   { href: "/explore", label: "Explore Markets", icon: Database },
   { href: "/saved", label: "Saved", icon: Bookmark, showBadge: true },
+  { href: "/canvas", label: "Canvas", icon: Crosshair },
   { href: "/sources", label: "Data Sources", icon: Plug },
   { href: "/calculator", label: "NACA Calculator", icon: Calculator },
 ];
@@ -43,6 +45,8 @@ export default function Sidebar() {
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
   const userPlan = (session?.user as { plan?: string })?.plan || "scout";
+  const userRole = (session?.user as { role?: string })?.role || "user";
+  const isAdmin = userRole === "admin";
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -90,8 +94,12 @@ export default function Sidebar() {
                 {userEmail}
               </div>
             </div>
-            <span className="text-[0.55rem] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 shrink-0">
-              {userPlan}
+            <span className={`text-[0.55rem] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+              isAdmin
+                ? "bg-amber-500/15 text-amber-400"
+                : "bg-blue-500/15 text-blue-400"
+            }`}>
+              {isAdmin ? "admin" : userPlan}
             </span>
           </div>
         )}
