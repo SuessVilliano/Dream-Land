@@ -21,8 +21,10 @@ import {
   Moon,
   LogOut,
   User,
+  Menu,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSavedProperties } from "@/context/SavedPropertiesContext";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -39,12 +41,53 @@ const NAV_ITEMS = [
   { href: "/help", label: "Help & Docs", icon: HelpCircle },
 ];
 
-export default function Sidebar() {
+export interface SidebarState {
+  collapsed: boolean;
+  isMobile: boolean;
+  mobileOpen: boolean;
+}
+
+export default function Sidebar({
+  onStateChange,
+}: {
+  onStateChange?: (state: SidebarState) => void;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { count } = useSavedProperties();
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
+
+  // Track viewport width
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setMobileOpen(false);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Notify parent of state changes
+  const notify = useCallback(
+    (c: boolean, mob: boolean, mobOpen: boolean) => {
+      onStateChange?.({ collapsed: c, isMobile: mob, mobileOpen: mobOpen });
+    },
+    [onStateChange]
+  );
+
+  useEffect(() => {
+    notify(collapsed, isMobile, mobileOpen);
+  }, [collapsed, isMobile, mobileOpen, notify]);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
@@ -58,11 +101,32 @@ export default function Sidebar() {
     .toUpperCase()
     .slice(0, 2);
 
+  const sidebarWidth = isMobile ? "w-[260px]" : collapsed ? "w-[68px]" : "w-[240px]";
+  const sidebarTranslate = isMobile && !mobileOpen ? "-translate-x-full" : "translate-x-0";
+
   return (
+    <>
+      {/* Mobile hamburger button */}
+      {isMobile && !mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-3 left-3 z-[60] p-2.5 rounded-xl bg-[rgba(15,23,42,0.9)] border border-blue-500/20 text-slate-300 hover:text-white hover:bg-[rgba(30,41,59,0.9)] transition-all"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Mobile overlay */}
+      {isMobile && mobileOpen && (
+        <div
+          className="fixed inset-0 z-[45] bg-black/60 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
     <aside
-      className={`fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 sidebar-bg ${
-        collapsed ? "w-[68px]" : "w-[240px]"
-      }`}
+      className={`fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 sidebar-bg ${sidebarWidth} ${sidebarTranslate}`}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 sidebar-border-b">
@@ -173,14 +237,25 @@ export default function Sidebar() {
           {!collapsed && <span>Log Out</span>}
         </button>
 
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full p-2.5 rounded-xl sidebar-collapse-btn cursor-pointer transition-all flex items-center justify-center"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        {/* Collapse Toggle (desktop) / Close (mobile) */}
+        {isMobile ? (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="w-full p-2.5 rounded-xl sidebar-collapse-btn cursor-pointer transition-all flex items-center justify-center gap-2"
+          >
+            <X size={18} />
+            <span className="text-sm">Close</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full p-2.5 rounded-xl sidebar-collapse-btn cursor-pointer transition-all flex items-center justify-center"
+          >
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        )}
       </div>
     </aside>
+    </>
   );
 }

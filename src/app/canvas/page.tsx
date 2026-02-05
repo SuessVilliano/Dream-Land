@@ -134,7 +134,8 @@ function CanvasInner() {
   const [searchAddress, setSearchAddress] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [radius, setRadius] = useState(0.5);
-  const [mapLayer, setMapLayer] = useState<"dark" | "satellite">("dark");
+  const [mapLayer, setMapLayer] = useState<"dark" | "satellite" | "streets" | "terrain">("dark");
+  const [showStreetView, setShowStreetView] = useState(false);
 
   /* --- GPS Locate --- */
   const locate = useCallback(() => {
@@ -251,27 +252,44 @@ function CanvasInner() {
     ownerDetail,
   };
 
-  const tileUrls = {
+  const tileUrls: Record<string, string> = {
     dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     satellite:
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    streets: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    terrain:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
   };
+
+  const mapLayerLabels: Record<string, string> = {
+    dark: "Dark",
+    satellite: "Satellite",
+    streets: "Streets",
+    terrain: "Terrain",
+  };
+
+  const nextLayer = () => {
+    const order: Array<"dark" | "satellite" | "streets" | "terrain"> = ["dark", "satellite", "streets", "terrain"];
+    const idx = order.indexOf(mapLayer);
+    setMapLayer(order[(idx + 1) % order.length]);
+  };
+
 
   return (
     <div className="h-screen flex flex-col">
       <AIAssistant appContext={aiContext} />
 
       {/* Toolbar */}
-      <div className="bg-[rgba(15,23,42,0.95)] border-b border-blue-500/20 px-6 py-3 flex items-center gap-4 z-10 flex-wrap">
-        <h1 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+      <div className="bg-[rgba(15,23,42,0.95)] border-b border-blue-500/20 px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 z-10 flex-wrap">
+        <h1 className="text-base md:text-lg font-bold text-slate-100 flex items-center gap-2">
           <Crosshair size={20} className="text-blue-400" />
-          Canvas
-          <span className="text-sm font-normal text-slate-500">
+          <span className="hidden sm:inline">Canvas</span>
+          <span className="text-sm font-normal text-slate-500 hidden md:inline">
             Door Knocker & Skip Trace
           </span>
         </h1>
 
-        <div className="flex-1" />
+        <div className="flex-1 min-w-0" />
 
         {/* Address search */}
         <form
@@ -288,7 +306,7 @@ function CanvasInner() {
               value={searchAddress}
               onChange={(e) => setSearchAddress(e.target.value)}
               placeholder="Search address or city..."
-              className="pl-9 pr-3 py-2 bg-[rgba(30,41,59,0.8)] border border-blue-500/20 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500 w-[260px] placeholder:text-slate-600"
+              className="pl-9 pr-3 py-2 bg-[rgba(30,41,59,0.8)] border border-blue-500/20 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500 w-[160px] md:w-[260px] placeholder:text-slate-600"
             />
           </div>
           <button
@@ -318,15 +336,29 @@ function CanvasInner() {
 
         {/* Map layer toggle */}
         <button
-          onClick={() =>
-            setMapLayer((l) => (l === "dark" ? "satellite" : "dark"))
-          }
+          onClick={nextLayer}
           className="px-3 py-2 bg-[rgba(30,41,59,0.8)] border border-blue-500/20 rounded-lg text-slate-400 text-sm cursor-pointer hover:text-slate-200 transition-all flex items-center gap-1.5"
-          title="Toggle map layer"
+          title="Cycle map layer"
         >
           <Layers size={14} />
-          {mapLayer === "dark" ? "Satellite" : "Dark"}
+          {mapLayerLabels[mapLayer]}
         </button>
+
+        {/* Street View toggle (visible when a parcel is selected) */}
+        {selectedParcel && (
+          <button
+            onClick={() => setShowStreetView((v) => !v)}
+            className={`px-3 py-2 border rounded-lg text-sm cursor-pointer transition-all flex items-center gap-1.5 ${
+              showStreetView
+                ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
+                : "bg-[rgba(30,41,59,0.8)] border-blue-500/20 text-slate-400 hover:text-slate-200"
+            }`}
+            title="Toggle Google Street View"
+          >
+            <Home size={14} />
+            Street View
+          </button>
+        )}
 
         {/* GPS button */}
         <button
@@ -356,65 +388,104 @@ function CanvasInner() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex relative">
-        {/* Map */}
-        <div className="flex-1">
+      <div className="flex-1 flex relative overflow-hidden">
+        {/* Map + Street View */}
+        <div className="flex-1 flex flex-col">
           {userLat !== null && userLng !== null ? (
-            <MapContainer
-              center={[userLat, userLng]}
-              zoom={16}
-              style={{ height: "100%", width: "100%" }}
-              scrollWheelZoom
-            >
-              <LeafletIconFix />
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                url={tileUrls[mapLayer]}
-              />
-              <MapRecenter lat={userLat} lng={userLng} zoom={16} />
-
-              {/* User position */}
-              <Circle
-                center={[userLat, userLng]}
-                radius={radius * 1000}
-                pathOptions={{
-                  color: "#3b82f6",
-                  fillColor: "#3b82f6",
-                  fillOpacity: 0.08,
-                  weight: 1,
-                }}
-              />
-
-              {/* Nearby parcels */}
-              {parcels.map((p, i) => (
-                <Marker
-                  key={`${p.address}-${i}`}
-                  position={[p.lat, p.lng]}
-                  eventHandlers={{
-                    click: () => skipTrace(p),
-                  }}
+            <div className={`flex-1 flex ${showStreetView && selectedParcel ? "flex-col md:flex-row" : ""}`}>
+              {/* Leaflet Map */}
+              <div className={`${showStreetView && selectedParcel ? "flex-1 min-h-[40%]" : "flex-1 h-full"}`}>
+                <MapContainer
+                  center={[userLat, userLng]}
+                  zoom={16}
+                  style={{ height: "100%", width: "100%" }}
+                  scrollWheelZoom
                 >
-                  <Popup>
-                    <div className="text-slate-900 min-w-[180px]">
-                      <strong className="text-sm">{p.address}</strong>
-                      {p.ownerName && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          Owner: {p.ownerName}
+                  <LeafletIconFix />
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                    url={tileUrls[mapLayer]}
+                  />
+                  <MapRecenter lat={userLat} lng={userLng} zoom={16} />
+
+                  {/* User position */}
+                  <Circle
+                    center={[userLat, userLng]}
+                    radius={radius * 1000}
+                    pathOptions={{
+                      color: "#3b82f6",
+                      fillColor: "#3b82f6",
+                      fillOpacity: 0.08,
+                      weight: 1,
+                    }}
+                  />
+
+                  {/* Nearby parcels */}
+                  {parcels.map((p, i) => (
+                    <Marker
+                      key={`${p.address}-${i}`}
+                      position={[p.lat, p.lng]}
+                      eventHandlers={{
+                        click: () => skipTrace(p),
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-slate-900 min-w-[180px]">
+                          <strong className="text-sm">{p.address}</strong>
+                          {p.ownerName && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              Owner: {p.ownerName}
+                            </div>
+                          )}
+                          {p.estimatedValue && (
+                            <div className="text-xs text-green-700 font-semibold mt-0.5">
+                              Est: ${p.estimatedValue.toLocaleString()}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {p.distanceMeters}m away
+                          </div>
                         </div>
-                      )}
-                      {p.estimatedValue && (
-                        <div className="text-xs text-green-700 font-semibold mt-0.5">
-                          Est: ${p.estimatedValue.toLocaleString()}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {p.distanceMeters}m away
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+
+              {/* Google Street View Panel */}
+              {showStreetView && selectedParcel && (
+                <div className="flex-1 min-h-[40%] relative border-t md:border-t-0 md:border-l border-blue-500/20">
+                  <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-[rgba(15,23,42,0.9)] border border-blue-500/20 text-xs text-slate-300 font-medium">
+                      Street View — {selectedParcel.address}
+                    </span>
+                    <button
+                      onClick={() => setShowStreetView(false)}
+                      className="p-1.5 rounded-lg bg-[rgba(15,23,42,0.9)] border border-blue-500/20 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/streetview?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&location=${selectedParcel.lat},${selectedParcel.lng}&heading=0&pitch=0&fov=90`}
+                    style={{ width: "100%", height: "100%", border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Google Street View"
+                  />
+                  {/* Fallback: If embed key doesn't work, show link */}
+                  <a
+                    href={`https://www.google.com/maps/@${selectedParcel.lat},${selectedParcel.lng},3a,75y,0h,90t/data=!3m4!1e1!3m2!1s!2e0`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[rgba(15,23,42,0.9)] border border-blue-500/20 text-xs text-blue-400 hover:text-blue-300 no-underline transition-colors"
+                  >
+                    Open in Google Maps ↗
+                  </a>
+                </div>
+              )}
+            </div>
           ) : (
             /* Empty state */
             <div className="h-full flex flex-col items-center justify-center bg-[rgba(10,15,25,0.5)]">
@@ -449,7 +520,7 @@ function CanvasInner() {
 
         {/* Parcel list sidebar */}
         {parcels.length > 0 && !selectedParcel && (
-          <div className="w-[340px] bg-[rgba(10,18,35,0.95)] border-l border-blue-500/20 overflow-y-auto shrink-0">
+          <div className="w-full md:w-[340px] bg-[rgba(10,18,35,0.95)] border-l border-blue-500/20 overflow-y-auto shrink-0 max-h-[40vh] md:max-h-none">
             <div className="p-4 border-b border-blue-500/15">
               <h3 className="text-sm font-semibold text-slate-200">
                 Nearby Parcels
@@ -510,7 +581,7 @@ function CanvasInner() {
 
         {/* Owner detail panel */}
         {selectedParcel && (
-          <div className="w-[400px] bg-[rgba(10,18,35,0.95)] border-l border-blue-500/20 overflow-y-auto shrink-0">
+          <div className="w-full md:w-[400px] bg-[rgba(10,18,35,0.95)] border-l border-blue-500/20 overflow-y-auto shrink-0 max-h-[50vh] md:max-h-none">
             <div className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div>
