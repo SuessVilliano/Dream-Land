@@ -10,6 +10,7 @@ import {
   Bookmark,
   Calculator,
   Database,
+  Plug,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/map", label: "Map View", icon: MapPin },
   { href: "/explore", label: "Explore Markets", icon: Database },
   { href: "/saved", label: "Saved", icon: Bookmark, showBadge: true },
+  { href: "/sources", label: "Data Sources", icon: Plug },
   { href: "/calculator", label: "NACA Calculator", icon: Calculator },
 ];
 
