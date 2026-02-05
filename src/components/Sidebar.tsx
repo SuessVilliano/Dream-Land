@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   Map,
   LayoutDashboard,
@@ -13,13 +14,18 @@ import {
   Plug,
   ChevronLeft,
   ChevronRight,
+  Sun,
+  Moon,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import { useSavedProperties } from "@/context/SavedPropertiesContext";
+import { useTheme } from "@/context/ThemeContext";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/", label: "Properties", icon: Search },
+  { href: "/properties", label: "Properties", icon: Search },
   { href: "/map", label: "Map View", icon: MapPin },
   { href: "/explore", label: "Explore Markets", icon: Database },
   { href: "/saved", label: "Saved", icon: Bookmark, showBadge: true },
@@ -31,15 +37,27 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { count } = useSavedProperties();
+  const { theme, toggleTheme } = useTheme();
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const userPlan = (session?.user as { plan?: string })?.plan || "scout";
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen z-50 bg-[#070d1b] border-r border-blue-500/15 flex flex-col transition-all duration-300 ${
+      className={`fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 sidebar-bg ${
         collapsed ? "w-[68px]" : "w-[240px]"
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-blue-500/15">
+      <div className="flex items-center gap-3 px-4 py-5 sidebar-border-b">
         <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-[0_4px_15px_rgba(59,130,246,0.3)] shrink-0">
           <Map size={20} color="white" />
         </div>
@@ -50,12 +68,41 @@ export default function Sidebar() {
         )}
       </div>
 
+      {/* User Profile */}
+      <div className={`px-3 py-4 sidebar-border-b ${collapsed ? "flex justify-center" : ""}`}>
+        {collapsed ? (
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white cursor-default"
+            title={`${userName}\n${userEmail}`}
+          >
+            {initials}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold sidebar-text-primary truncate">
+                {userName}
+              </div>
+              <div className="text-[0.65rem] sidebar-text-secondary truncate">
+                {userEmail}
+              </div>
+            </div>
+            <span className="text-[0.55rem] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 shrink-0">
+              {userPlan}
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(item.href));
+            (item.href !== "/properties" && pathname.startsWith(item.href));
           const Icon = item.icon;
           return (
             <Link
@@ -63,8 +110,8 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium no-underline transition-all group relative ${
                 isActive
-                  ? "bg-blue-500/15 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.25)]"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+                  ? "nav-item-active"
+                  : "nav-item-inactive"
               }`}
               title={collapsed ? item.label : undefined}
             >
@@ -86,13 +133,42 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="mx-2 mb-4 p-2.5 rounded-xl bg-transparent border border-blue-500/15 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 cursor-pointer transition-all flex items-center justify-center"
-      >
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
+      {/* Bottom controls */}
+      <div className="px-2 pb-4 space-y-1">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium sidebar-btn transition-all"
+          title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
+        >
+          {theme === "dark" ? (
+            <Sun size={20} className="shrink-0" />
+          ) : (
+            <Moon size={20} className="shrink-0" />
+          )}
+          {!collapsed && (
+            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          )}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium sidebar-btn transition-all hover:!text-red-400"
+          title={collapsed ? "Log out" : undefined}
+        >
+          <LogOut size={20} className="shrink-0" />
+          {!collapsed && <span>Log Out</span>}
+        </button>
+
+        {/* Collapse Toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full p-2.5 rounded-xl sidebar-collapse-btn cursor-pointer transition-all flex items-center justify-center"
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
     </aside>
   );
 }
