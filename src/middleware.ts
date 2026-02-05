@@ -12,6 +12,8 @@ const PROTECTED_PATHS = [
   "/calculator",
   "/sources",
   "/canvas",
+  "/tax-liens",
+  "/help",
 ];
 
 // Routes that should redirect to dashboard if already logged in
@@ -54,6 +56,8 @@ export const config = {
     "/calculator/:path*",
     "/sources/:path*",
     "/canvas/:path*",
+    "/tax-liens/:path*",
+    "/help/:path*",
     "/login",
     "/signup",
   ],

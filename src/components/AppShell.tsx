@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Sidebar from "@/components/Sidebar";
+import Onboarding from "@/components/Onboarding";
 import { SavedPropertiesProvider } from "@/context/SavedPropertiesContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
@@ -30,6 +31,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <main className="flex-1 ml-[240px] transition-all duration-300 peer-[.collapsed]:ml-[68px]">
             {children}
           </main>
+          <Onboarding />
         </div>
       </SavedPropertiesProvider>
     </ThemeProvider>

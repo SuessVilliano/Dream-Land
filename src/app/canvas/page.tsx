@@ -41,6 +41,10 @@ const Popup = dynamic(
   () => import("react-leaflet").then((mod) => mod.Popup),
   { ssr: false }
 );
+const LeafletIconFix = dynamic(
+  () => import("@/components/LeafletIconFix"),
+  { ssr: false }
+);
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface NearbyParcel {
@@ -362,6 +366,7 @@ function CanvasInner() {
               style={{ height: "100%", width: "100%" }}
               scrollWheelZoom
             >
+              <LeafletIconFix />
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                 url={tileUrls[mapLayer]}
