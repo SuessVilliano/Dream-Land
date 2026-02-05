@@ -17,6 +17,7 @@ import PropertyDetail from "@/components/PropertyDetail";
 import PlatformDirectory from "@/components/PlatformDirectory";
 import FiltersPanel, { Filters } from "@/components/FiltersPanel";
 import { MOCK_PROPERTIES, PropertyData } from "@/data/properties";
+import AIAssistant from "@/components/AIAssistant";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -81,8 +82,25 @@ export default function HomePage() {
     [filteredProperties]
   );
 
+  const aiContext = useMemo(
+    () => ({
+      currentPage: "properties",
+      properties: filteredProperties,
+      selectedProperty: selectedProperty
+        ? { id: selectedProperty.id, address: selectedProperty.address }
+        : null,
+      activeFilters: filters,
+      filteredCount: filteredProperties.length,
+      totalCount: MOCK_PROPERTIES.length,
+    }),
+    [filteredProperties, selectedProperty, filters]
+  );
+
   return (
     <div className="min-h-screen">
+      {/* AI Assistant */}
+      <AIAssistant appContext={aiContext} />
+
       {/* Header */}
       <header className="bg-[rgba(15,23,42,0.8)] backdrop-blur-xl border-b border-blue-500/20 px-8 py-4 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-8">

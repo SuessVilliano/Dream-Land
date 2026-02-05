@@ -11,6 +11,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import AIAssistant from "@/components/AIAssistant";
+import { MOCK_PROPERTIES } from "@/data/properties";
 
 export default function CalculatorPage() {
   const [income, setIncome] = useState(55000);
@@ -54,8 +56,31 @@ export default function CalculatorPage() {
     };
   }, [income, monthlyDebts, interestRate, loanTerm]);
 
+  const aiContext = useMemo(
+    () => ({
+      currentPage: "calculator",
+      properties: MOCK_PROPERTIES,
+      totalCount: MOCK_PROPERTIES.length,
+      calculatorData: {
+        income,
+        monthlyDebts,
+        interestRate,
+        loanTerm,
+        maxLoanAmount: results.maxLoanAmount,
+        effectiveMaxPayment: results.effectiveMaxPayment,
+        frontEndDTI: results.frontEndDTI,
+        projectedBackEndDTI: results.projectedBackEndDTI,
+        isQualified: results.isQualified,
+      },
+    }),
+    [income, monthlyDebts, interestRate, loanTerm, results]
+  );
+
   return (
     <div className="min-h-screen p-8">
+      {/* AI Assistant */}
+      <AIAssistant appContext={aiContext} />
+
       <div className="max-w-[1000px] mx-auto">
         {/* Back link */}
         <Link
