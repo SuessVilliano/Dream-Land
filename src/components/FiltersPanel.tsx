@@ -29,8 +29,28 @@ export default function FiltersPanel({ filters, onChange }: FiltersPanelProps) {
           className="w-full p-2.5 bg-[rgba(30,41,59,0.8)] border border-blue-500/20 rounded-lg text-slate-200 font-sans focus:outline-none focus:border-blue-500"
         >
           <option value="all">All States</option>
+          <option value="AL">Alabama</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CO">Colorado</option>
           <option value="FL">Florida</option>
           <option value="GA">Georgia</option>
+          <option value="IN">Indiana</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="MI">Michigan</option>
+          <option value="MO">Missouri</option>
+          <option value="MS">Mississippi</option>
+          <option value="NC">North Carolina</option>
+          <option value="NM">New Mexico</option>
+          <option value="NV">Nevada</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="SC">South Carolina</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="WV">West Virginia</option>
         </select>
       </div>
 

@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'leaflet/dist/leaflet.css';
 
 * {
   margin: 0;
@@ -106,6 +107,32 @@ body {
 
 .ai-verdict[data-verdict="speculative"],
 .ai-verdict[data-verdict="proceed-with-caution"] {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+/* Verdict badges (used in map sidebar) */
+.verdict-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.verdict-badge.excellent-opportunity,
+.verdict-badge.strong-buy,
+.verdict-badge.best-budget-pick,
+.verdict-badge.excellent-deal,
+.verdict-badge.top-pick-for-off-grid,
+.verdict-badge.off-grid-paradise,
+.verdict-badge.homestead-dream,
+.verdict-badge.homestead-ready,
+.verdict-badge.adventure-homestead,
+.verdict-badge.best-acreage-deal {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.verdict-badge.proceed-with-caution,
+.verdict-badge.speculative {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
 }
