@@ -14,15 +14,30 @@ interface StoredUser {
   email: string;
   passwordHash: string;
   plan: string;
+  role: "user" | "admin";
   createdAt: string;
 }
+
+// Pre-seeded admin account
+const SEED_USERS: StoredUser[] = [
+  {
+    id: "admin-001",
+    name: "Liv8 Admin",
+    email: "admin@liv8.co",
+    passwordHash:
+      "$2b$12$y6PNSjcBvnhB45wRIPKiCOqfmd9yjKD6DqOYOTyz4eq6LcSee9LGm",
+    plan: "enterprise",
+    role: "admin",
+    createdAt: "2025-01-01T00:00:00.000Z",
+  },
+];
 
 // We use a global so it survives hot reloads in dev
 const globalUsers = globalThis as unknown as {
   __landscout_users?: StoredUser[];
 };
 if (!globalUsers.__landscout_users) {
-  globalUsers.__landscout_users = [];
+  globalUsers.__landscout_users = [...SEED_USERS];
 }
 const users = globalUsers.__landscout_users;
 
@@ -56,6 +71,7 @@ export const authOptions: NextAuthOptions = {
             email,
             passwordHash,
             plan: credentials.plan || "scout",
+            role: "user",
             createdAt: new Date().toISOString(),
           };
           users.push(newUser);
@@ -65,7 +81,8 @@ export const authOptions: NextAuthOptions = {
             name: newUser.name,
             email: newUser.email,
             plan: newUser.plan,
-          } as { id: string; name: string; email: string; plan: string };
+            role: newUser.role,
+          } as { id: string; name: string; email: string; plan: string; role: string };
         }
 
         // --- LOGIN ---
@@ -87,7 +104,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           plan: user.plan,
-        } as { id: string; name: string; email: string; plan: string };
+          role: user.role,
+        } as { id: string; name: string; email: string; plan: string; role: string };
       },
     }),
   ],
@@ -100,6 +118,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.plan = (user as { plan?: string }).plan ?? "scout";
+        token.role = (user as { role?: string }).role ?? "user";
       }
       return token;
     },
@@ -107,6 +126,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { plan?: string }).plan = token.plan as string;
+        (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },
